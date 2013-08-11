@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+
+.dashed {
+  border-style: dashed;
+}
+
+.panel-fixed {
+
+}
+
+.fileUpload {
+	position: relative;
+	overflow: hidden;
+}
+.fileUpload input {
+	position: absolute;
+	top: 0;
+	right: 0;
+	margin: 0;
+	padding: 0;
+	font-size: 20px;
+	cursor: pointer;
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+
+</style>
+
+<div class="row">
+    <div class="col-9">
+        {% for image in images %}
+        <div class="col-lg-3" style="margin-bottom: 1em;">
+            <a href="{{ image.original }}" class="thumbnail">
+                <img src="{{ image.thumbnail }}" align="middle" />
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="col-3 panel panel-fixed">
+        <div class="panel-heading">
+            <h3 class="panel-title">Upload Image</h3>
+        </div>
+        <div id="dropbox-alert" class="alert hide"></div>
+        <div id="dropbox" class="panel panel-primary dashed">
+            <h4><center>Drag &amp; Drop to Upload</center></h4>
+        </div>
+        <div class="progress hide">
+            <div class="progress-bar" style="width: 0%;"></div>
+        </div>
+        <form method="POST" action="/create.html" enctype="multipart/form-data" class="form-inline">
+            <div class="fileUpload btn btn-primary">
+                <span>select a file to upload</span>
+                <input class="upload" type="file" name="image" value="" onchange="this.form.submit()" />
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function(){
+
+    var dropbox = $('#dropbox'),
+        message = $('#dropbox-alert');
+
+    dropbox.filedrop({
+        // The name of the $_FILES entry:
+        paramname:'image',
+
+        maxfiles: 5,
+    	maxfilesize: 2, // in mb
+        url: '/create.json',
+
+        uploadFinished:function(i, file, response){
+            showMessage('File uploaded. Reloading...', 'alert-success');
+	    setInterval(function(){location.reload();},1000);
+        },
+
+    	error: function(err, file) {
+            switch(err) {
+                case 'BrowserNotSupported':
+                    showMessage('Your browser does not support HTML5 file uploads!', 'alert-danger');
+                    break;
+                case 'TooManyFiles':
+                    showMessage('Too many files! Please select 5 at most!', 'alert-danger');
+                    break;
+                case 'FileTooLarge':
+                    showMessage(file.name+' is too large! Please upload files up to 2mb.', 'alert-danger');
+                    break;
+                default:
+                    break;
+            }
+        },
+
+        // Called before each upload is started
+        beforeEach: function(file){
+            if(!file.type.match(/^image\//)){
+                alert('Only images are allowed!');
+
+                // Returning false will cause the
+                // file to be rejected
+                return false;
+            }
+        },
+
+        uploadStarted:function(i, file, len){
+            createImage(file);
+        },
+
+        progressUpdated: function(i, file, progress) {
+            var percentage = progress.toString() + '%';
+	    $('.progress').removeClass('hide');
+            $('.progress-bar').width(percentage);
+        }
+
+    });
+
+    function createImage(file){
+
+        var reader = new FileReader();
+
+        reader.readAsDataURL(file);
+
+        message.hide();
+
+        // Associating a preview container
+        // with the file, using jQuery's $.data():
+
+        $.data(file,null);
+    }
+
+    function showMessage(msg, cls){
+        message.attr('class', 'alert');
+	message.addClass(cls);
+        message.html(msg);
+        message.show();
+    }
+
+});
+
+</script>
+{% endblock %}
