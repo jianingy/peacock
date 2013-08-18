@@ -18,6 +18,7 @@ setup(
         "short-url",
         "sqlalchemy",
         "PIL",
+        "pika",
     ],
     test_suite='peacock',
     zip_safe=False,

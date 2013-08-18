@@ -1,7 +1,8 @@
 # Server Specific Configurations
 server = {
     'port': '8080',
-    'host': '0.0.0.0'
+    'host': '0.0.0.0',
+    'domain': 'localhost',
 }
 
 # Pecan Application Configurations
@@ -47,6 +48,13 @@ sqlalchemy = {
     'encoding'      : 'utf-8'
 }
 
+# Custom Configurations must be in Python dictionary format::
+#
+# foo = {'bar':'baz'}
+#
+# All configurations are accessible at::
+# pecan.conf
+
 image = {
     'allowed_extensions': {
         'png': 'image/png',
@@ -56,9 +64,13 @@ image = {
     },
     'thumbnail_size': (177, 180),
 }
-# Custom Configurations must be in Python dictionary format::
-#
-# foo = {'bar':'baz'}
-#
-# All configurations are accessible at::
-# pecan.conf
+
+amqp = {
+    'user': 'guest',
+    'password': 'guest',
+    'host': '127.0.0.1',
+    'port': 5672,
+    'queue': 'whistle.recv',
+}
+
+irc = {'channel': '#'}

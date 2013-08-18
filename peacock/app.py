@@ -1,6 +1,7 @@
 from pecan.hooks import TransactionHook
 from pecan import make_app
 from peacock import model
+from peacock.hooks import AMQPHook
 
 
 def setup_app(config):
@@ -15,6 +16,7 @@ def setup_app(config):
         logging=getattr(config, 'logging', {}),
         debug=getattr(config.app, 'debug', False),
         hooks = [
+            AMQPHook(),
             TransactionHook(
                 model.start,
                 model.start_read_only,

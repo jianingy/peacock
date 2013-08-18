@@ -8,6 +8,7 @@ from os import makedirs
 import short_url
 import pecan
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -49,16 +50,21 @@ class RootController(object):
 
             surl = short_url.encode_url(image_id)
             resp = {'message': 'success', 'reason': 'created'}
+            logger.info('new image created url: id = %s' % image_id)
+            self._notify(surl)
         else:
             try:
                 image = db_api.get_image_by_relative_path(relative_path)
                 surl = short_url.encode_url(image.id)
                 resp = {'message': 'success', 'reason': 'exists'}
+                logger.info('old image found: id = %s' % image.id)
             except exception.ImageNotFound:
                 image_id = db_api.create_image(relative_path=relative_path,
                                                content_type=content_type)
                 surl = short_url.encode_url(image_id)
                 resp = {'message': 'success', 'reason': 'created'}
+                logger.info('recreate missing image: id = %s' % image_id)
+                self._notify(surl)
 
         if pecan.request.path.endswith('.html'):
             return redirect('/')
@@ -110,3 +116,15 @@ class RootController(object):
             status = 500
         message = getattr(status_map.get(status), 'explanation', '')
         return dict(status=status, message=message)
+
+    def _notify(self, url):
+        irc_channel = conf.irc.channel
+        message = 'http://%s:%s/i/%s' % (conf.server.domain,
+                                         conf.server.port, url)
+        message = json.dumps(dict(message=message, channel=irc_channel))
+        exchange = conf.amqp.queue
+        channel = pecan.request.channel
+        logger.debug('notify message: %s,%s,%s' % (message, irc_channel, exchange))
+        channel.basic_publish(exchange=exchange,
+                              routing_key=irc_channel,
+                              body=message)
